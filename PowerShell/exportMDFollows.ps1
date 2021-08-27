@@ -4,6 +4,8 @@ param (
 	[string]$OutputDir = "${env:UserProfile}/Desktop"
 )
 
+Import-Module -Name .\mdApi.psm1;
+
 <#
 	"Log user into MD"
 #>
@@ -121,13 +123,13 @@ function Export-FollowData {
 $baseUri = 'https://api.mangadex.org';
 
 try {
-	$token = Authenticate-User;
+	$token = Login -mdCredentials $(Get-Credential) ;
 	
 	Start-Sleep -Seconds 1; # Slow things down
 
-	(Export-FollowData -token $token) | ConvertTo-Json | Out-File -FilePath "$OutputDir/mdexport.json";
+	#(Export-FollowData -token $token) | ConvertTo-Json | Out-File -FilePath "$OutputDir/mdexport.json";
 
-	Logout-User -token $token;
+	Logout -token $token;
 }
 catch {
 	Write-Error $_;
