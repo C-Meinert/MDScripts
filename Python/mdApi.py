@@ -17,6 +17,14 @@ class MdApi:
         unixtime = time.mktime(expTime.timetuple())
         return int(unixtime)
     
+    def __limitValidation(self, limit, offset) -> bool:
+        print("__makeTokenExpTime()")
+        if limit > 100 or limit < 0:
+            return False
+        if offset < 0:
+            return False
+        return True
+    
     # authenticate user
     def authLogin(self, username, password) -> None:
         # make url and headers
@@ -97,6 +105,7 @@ class MdApi:
         
         return response.json()
 
+    # get users profile
     def userMe(self):
         # Check if session needs to be refreshed first
         if self.__tokenExp < int(time.time()):
@@ -118,14 +127,10 @@ class MdApi:
 
         return response.json()
     
+    # get list of followed manga
     def userFollowsManga(self, limit = 100, offset = 0):
-        if limit > 100:
-            limit = 100
-        elif limit < 0:
-            limit = 0
-        
-        if offset < 0:
-            offset = 0
+        if not self.__limitValidation(limit, offset):
+            raise ValueError("limit must be between 0 and 100. offset must be 0 or greater.")
 
         # Check if session needs to be refreshed first
         if self.__tokenExp < int(time.time()):
@@ -151,14 +156,10 @@ class MdApi:
 
         return response.json()
 
+    # get list of followed groups
     def userFollowsGroup(self, limit = 100, offset = 0):
-        if limit > 100:
-            limit = 100
-        elif limit < 0:
-            limit = 0
-        
-        if offset < 0:
-            offset = 0
+        if not self.__limitValidation(limit, offset):
+            raise ValueError("limit must be between 0 and 100. offset must be 0 or greater.")
 
         # Check if session needs to be refreshed first
         if self.__tokenExp < int(time.time()):
@@ -184,14 +185,10 @@ class MdApi:
 
         return response.json()
     
+    # get list of followed users
     def userFollowsUser(self, limit = 100, offset = 0):
-        if limit > 100:
-            limit = 100
-        elif limit < 0:
-            limit = 0
-        
-        if offset < 0:
-            offset = 0
+        if not self.__limitValidation(limit, offset):
+            raise ValueError("limit must be between 0 and 100. offset must be 0 or greater.")
 
         # Check if session needs to be refreshed first
         if self.__tokenExp < int(time.time()):
@@ -216,6 +213,46 @@ class MdApi:
             raise requests.HTTPError(f"Error response returned. {response.status_code} {url}: {response.reason}")
 
         return response.json()
+
+    # change user password
+    def userPassword(self, password, newPassword) -> None:
+        # Check if session needs to be refreshed first
+        if self.__tokenExp < int(time.time()):
+            self.authRefresh()
+        
+        # make url and headers
+        url = f"{MdApi.baseUrl}/user/password"
+        headers = {
+			'accept':'application/json',
+			'content-type':'application/json',
+            'Authorization':f"Bearer {self.__token['session']}"
+		}
+
+        print(f"calling {url}")
+        response = requests.post(url=url,headers=headers,json={'oldPassword':password,'newPassword':newPassword})
+
+        if not response.ok:
+            raise requests.HTTPError(f"Error response returned. {response.status_code} {url}: {response.reason}")
+
+    # change user email
+    def userEmail(self, newEmail) -> None:
+        # Check if session needs to be refreshed first
+        if self.__tokenExp < int(time.time()):
+            self.authRefresh()
+        
+        # make url and headers
+        url = f"{MdApi.baseUrl}/user/password"
+        headers = {
+			'accept':'application/json',
+			'content-type':'application/json',
+            'Authorization':f"Bearer {self.__token['session']}"
+		}
+
+        print(f"calling {url}")
+        response = requests.post(url=url,headers=headers,json={'email':newEmail})
+
+        if not response.ok:
+            raise requests.HTTPError(f"Error response returned. {response.status_code} {url}: {response.reason}")
         
     
     def getToken(self):
