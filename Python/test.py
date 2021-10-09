@@ -1,24 +1,33 @@
 import getpass
+import json
 from mdApi import MdApi
 
 try:
     api = MdApi()
 
-    username = input("Enter username: ")
-    password = getpass.getpass(prompt="Enter password: ")
+    chapterId = '478a3742-b70a-4f4c-892b-b9b1b6ad4fb1'
+    chapterData = api.chapterGet(chapterId)
+    serverData = api.athomeServer(chapterId,0)
 
-    api.authLogin(username,password)
+    page = api.getPage(serverData['baseUrl'],'data',((chapterData['data'])['attributes'])['hash'],(((chapterData['data'])['attributes'])['data'])[0])
 
-    temp = api.authCheck()
-    print(temp)
+    open(f"../{(((chapterData['data'])['attributes'])['data'])[0]}",'wb').write(page)
 
-    temp = api.userMe()
-    print(temp)
+    # username = input("Enter username: ")
+    # password = getpass.getpass(prompt="Enter password: ")
 
-    temp = api.userFollowsGroup()
-    print(temp)
+    # api.authLogin(username,password)
 
-    api.authLogout()
+    # temp = api.authCheck()
+    # print(temp)
+
+    # temp = api.userMe()
+    # print(temp)
+
+    # temp = api.userFollowsGroup()
+    # print(temp)
+
+    # api.authLogout()
 except Exception as e:
     print(f"Stuff happens\n{e}")
 finally:

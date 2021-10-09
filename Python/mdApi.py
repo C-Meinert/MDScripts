@@ -148,7 +148,7 @@ class MdApi:
             'offset':offset
         }
 
-        print(f"calling {url}")
+        print(f"calling {url}\n{parameters}")
         response = requests.get(url=url,headers=headers,params=parameters)
 
         if not response.ok:
@@ -177,7 +177,7 @@ class MdApi:
             'offset':offset
         }
 
-        print(f"calling {url}")
+        print(f"calling {url}\n{parameters}")
         response = requests.get(url=url,headers=headers,params=parameters)
 
         if not response.ok:
@@ -206,7 +206,7 @@ class MdApi:
             'offset':offset
         }
 
-        print(f"calling {url}")
+        print(f"calling {url}\n{parameters}")
         response = requests.get(url=url,headers=headers,params=parameters)
 
         if not response.ok:
@@ -253,7 +253,82 @@ class MdApi:
 
         if not response.ok:
             raise requests.HTTPError(f"Error response returned. {response.status_code} {url}: {response.reason}")
+    
+    # get MD@H url
+    def athomeServer(self, chapterId, force443=0):
+        # make url and headers
+        url = f"{MdApi.baseUrl}/at-home/server/{chapterId}"
+        headers = {
+			'accept':'application/json',
+			'content-type':'application/json'
+		}
+        parameters = {
+            'forcePort443' : bool(force443)
+        }
+
+        print(f"calling {url}\n{parameters}")
+        response = requests.get(url=url,headers=headers,params=parameters)
+    
+        if not response.ok:
+            raise requests.HTTPError(f"Error response returned. {response.status_code} {url}: {response.reason}")
         
+        return response.json()
+
+    # get chapter
+    def chapterGet(self, chapterId):
+        # make url and headers
+        url = f"{MdApi.baseUrl}/chapter/{chapterId}"
+        headers = {
+			'accept':'application/json',
+			'content-type':'application/json'
+		}
+
+        print(f"calling {url}")
+        response = requests.get(url=url,headers=headers)
+    
+        if not response.ok:
+            raise requests.HTTPError(f"Error response returned. {response.status_code} {url}: {response.reason}")
+        
+        return response.json()
+    
+    # get page
+    def getPage(self, baseUrl, qualityMode, chapterHash, fileName ):
+        # make url and headers
+        url = f"{baseUrl}/{qualityMode}/{chapterHash}/{fileName}"
+        headers = {
+			'accept':'application/json',
+			'content-type':'application/json'
+		}
+
+        print(f"calling {url}")
+        response = requests.get(url=url,headers=headers)
+    
+        if not response.ok:
+            raise requests.HTTPError(f"Error response returned. {response.status_code} {url}: {response.reason}")
+        
+        return response.content
+
+    # Create new title
+    def mangaCreate(self):
+        # Check if session needs to be refreshed first
+        if self.__tokenExp < int(time.time()):
+            self.authRefresh()
+        
+        # make url and headers
+        url = f"{MdApi.baseUrl}/manga"
+        headers = {
+			'accept':'application/json',
+			'content-type':'application/json',
+            'Authorization':f"Bearer {self.__token['session']}"
+		}
+
+        print(f"calling {url}")
+        response = requests.post(url=url,headers=headers,json={})
+    
+        if not response.ok:
+            raise requests.HTTPError(f"Error response returned. {response.status_code} {url}: {response.reason}")
+        
+        return response.json()
     
     def getToken(self):
         return self.__token
