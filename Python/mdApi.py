@@ -21,7 +21,7 @@ class MdApi:
         print("__makeTokenExpTime()")
         if limit > 100 or limit < 0:
             return False
-        if offset < 0:
+        if offset < 0 or offset > 9999:
             return False
         return True
     
@@ -255,7 +255,7 @@ class MdApi:
             raise requests.HTTPError(f"Error response returned. {response.status_code} {url}: {response.reason}")
     
     # get MD@H url
-    def athomeServer(self, chapterId, force443=0):
+    def athomeServer(self, chapterId, force443=False):
         # make url and headers
         url = f"{MdApi.baseUrl}/at-home/server/{chapterId}"
         headers = {
@@ -263,7 +263,7 @@ class MdApi:
 			'content-type':'application/json'
 		}
         parameters = {
-            'forcePort443' : bool(force443)
+            'forcePort443' : force443
         }
 
         print(f"calling {url}\n{parameters}")
@@ -292,7 +292,8 @@ class MdApi:
         return response.json()
     
     # get page
-    def getPage(self, baseUrl, qualityMode, chapterHash, fileName ):
+    def getPage(self, baseUrl, chapterHash: str, fileName:str, dataSaver = False ):
+        qualityMode = 'dataSaver' if dataSaver else 'data'
         # make url and headers
         url = f"{baseUrl}/{qualityMode}/{chapterHash}/{fileName}"
         headers = {
@@ -323,7 +324,50 @@ class MdApi:
 		}
 
         print(f"calling {url}")
+
+        raise NotImplementedError()
+
         response = requests.post(url=url,headers=headers,json={})
+    
+        if not response.ok:
+            raise requests.HTTPError(f"Error response returned. {response.status_code} {url}: {response.reason}")
+        
+        return response.json()
+    
+    def mangaGet(self, titleId):
+        # make url and headers
+        url = f"{MdApi.baseUrl}/manga/{titleId}"
+        headers = {
+			'accept':'application/json',
+			'content-type':'application/json'
+		}
+
+        print(f"calling {url}")
+        response = requests.get(url=url,headers=headers)
+    
+        if not response.ok:
+            raise requests.HTTPError(f"Error response returned. {response.status_code} {url}: {response.reason}")
+        
+        return response.json()
+
+    def mangaFeed(self, titleId, limit = 100, offset = 0, translatedLanguage = []):
+        if not self.__limitValidation(limit, offset):
+            raise ValueError("limit must be between 0 and 100. offset must be 0 or greater.")
+        # make url and headers
+        url = f"{MdApi.baseUrl}/manga/{titleId}/feed"
+        headers = {
+			'accept':'application/json',
+			'content-type':'application/json'
+		}
+
+        parameters = {
+            'limit':limit,
+            'offset':offset,
+            'translatedLanguage[]': translatedLanguage
+        }
+
+        print(f"calling {url}\n{parameters}")
+        response = requests.get(url=url,headers=headers,params=parameters)
     
         if not response.ok:
             raise requests.HTTPError(f"Error response returned. {response.status_code} {url}: {response.reason}")

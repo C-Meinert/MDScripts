@@ -1,17 +1,32 @@
 import getpass
-import json
+import os
+import time
 from mdApi import MdApi
 
 try:
     api = MdApi()
+    mangaId = "c52b2ce3-7f95-469c-96b0-479524fb7a1a"
+    mangaFeedData = api.mangaFeed(mangaId, translatedLanguage=["en"])
 
-    chapterId = '478a3742-b70a-4f4c-892b-b9b1b6ad4fb1'
-    chapterData = api.chapterGet(chapterId)
-    serverData = api.athomeServer(chapterId,0)
+    chapterIds = []
+    for chapterInfo in mangaFeedData["data"]:
+        # print(chapterInfo["attributes"]["externalUrl"])
+        if(chapterInfo["attributes"]["externalUrl"] is None or not chapterInfo["attributes"]["externalUrl"]):
+            chapterIds.append(chapterInfo["id"])
 
-    page = api.getPage(serverData['baseUrl'],'data',((chapterData['data'])['attributes'])['hash'],(((chapterData['data'])['attributes'])['data'])[0])
+    print("Number of chapters found:", len(chapterIds))
+    chapterData = api.chapterGet(chapterIds[0])
+    serverData = api.athomeServer(chapterIds[0])
 
-    open(f"../{(((chapterData['data'])['attributes'])['data'])[0]}",'wb').write(page)
+    folderPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Chapters", chapterIds[0])
+    os.makedirs(folderPath, exist_ok=True)
+
+    for page in serverData["chapter"]["data"]:
+        print(page)
+        pageData = api.getPage(serverData['baseUrl'],serverData["chapter"]["hash"],page)
+        with open(f"{os.path.join(folderPath, page)}", "wb") as f:
+            f.write(pageData)
+        time.sleep(1)
 
     # username = input("Enter username: ")
     # password = getpass.getpass(prompt="Enter password: ")
