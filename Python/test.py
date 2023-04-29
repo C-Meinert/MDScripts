@@ -6,7 +6,7 @@ from mdApi import MdApi
 try:
     api = MdApi()
     mangaId = "c52b2ce3-7f95-469c-96b0-479524fb7a1a"
-    mangaFeedData = api.mangaFeed(mangaId, translatedLanguage=["en"])
+    mangaFeedData = api.mangaFeed(mangaId, translatedLanguage=["en"], order= {"volume": "desc", "chapter": "desc"})
 
     chapterIds = []
     for chapterInfo in mangaFeedData["data"]:

@@ -17,7 +17,7 @@ class MdApi:
         unixtime = time.mktime(expTime.timetuple())
         return int(unixtime)
     
-    def __limitValidation(self, limit, offset) -> bool:
+    def __limitValidation(self, limit: int, offset: int) -> bool:
         print("__makeTokenExpTime()")
         if limit > 100 or limit < 0:
             return False
@@ -25,7 +25,14 @@ class MdApi:
             return False
         return True
     
+    def __parseOrder(self, order:dict) -> dict:
+        orderQuery = {}
+        for key, value in order.items():
+            orderQuery[f"order[{key}]"] = value
+        return orderQuery
+    
     # authenticate user
+    # Deprecated
     def authLogin(self, username, password) -> None:
         # make url and headers
         url = f"{MdApi.baseUrl}/auth/login"
@@ -44,6 +51,7 @@ class MdApi:
         self.__token = response.json()["token"]
     
     # end user session
+    # Deprecated
     def authLogout(self) -> None:
         # Check if session needs to be refreshed first
         if self.__tokenExp < int(time.time()):
@@ -66,6 +74,7 @@ class MdApi:
         self.__token = None
 
     # Refresh user session
+    # Deprecated
     def authRefresh(self) -> None:
         # make url and headers
         url = f"{MdApi.baseUrl}/auth/refresh"
@@ -117,6 +126,60 @@ class MdApi:
 			'accept':'application/json',
 			'content-type':'application/json',
             'Authorization':f"Bearer {self.__token['session']}"
+		}
+
+        print(f"calling {url}")
+        response = requests.get(url=url,headers=headers)
+
+        if not response.ok:
+            raise requests.HTTPError(f"Error response returned. {response.status_code} {url}: {response.reason}")
+
+        return response.json()
+    
+    # Get users
+    def userGet(self, limit = 100, offset = 0, userIds = [], username = "", order = {}):
+        if not self.__limitValidation(limit, offset):
+            raise ValueError("limit must be between 0 and 100. offset must be 0 or greater.")
+        
+        # Check if session needs to be refreshed first
+        if self.__tokenExp < int(time.time()):
+            self.authRefresh()
+        
+        # make url and headers
+        url = f"{MdApi.baseUrl}/user"
+        headers = {
+			'accept':'application/json',
+			'content-type':'application/json',
+            'Authorization':f"Bearer {self.__token['session']}"
+		}
+
+        queryOrder = self.__parseOrder(order)
+
+        parameters = {
+            **{
+                'limit':limit,
+                'offset':offset,
+                'ids[]':userIds,
+                'username':username
+            },
+            **queryOrder
+        }
+
+        print(f"calling {url}\n{parameters}")
+        response = requests.get(url=url,headers=headers,params=parameters)
+
+        if not response.ok:
+            raise requests.HTTPError(f"Error response returned. {response.status_code} {url}: {response.reason}")
+
+        return response.json()
+    
+    # Get users
+    def userGetById(self, userId):
+        # make url and headers
+        url = f"{MdApi.baseUrl}/user{userId}"
+        headers = {
+			'accept':'application/json',
+			'content-type':'application/json'
 		}
 
         print(f"calling {url}")
@@ -215,6 +278,7 @@ class MdApi:
         return response.json()
 
     # change user password
+    # Deprecated
     def userPassword(self, password, newPassword) -> None:
         # Check if session needs to be refreshed first
         if self.__tokenExp < int(time.time()):
@@ -235,6 +299,7 @@ class MdApi:
             raise requests.HTTPError(f"Error response returned. {response.status_code} {url}: {response.reason}")
 
     # change user email
+    # Deprecated
     def userEmail(self, newEmail) -> None:
         # Check if session needs to be refreshed first
         if self.__tokenExp < int(time.time()):
@@ -350,7 +415,8 @@ class MdApi:
         
         return response.json()
 
-    def mangaFeed(self, titleId, limit = 100, offset = 0, translatedLanguage = []):
+    def mangaFeed(self, titleId, limit = 100, offset = 0, translatedLanguage = [], originalLanguage = [], excludedOriginalLanguage = [],
+                  contentRating=["safe", "suggestive", "erotica"], excludedGroups = [], includes = [], order = {}):
         if not self.__limitValidation(limit, offset):
             raise ValueError("limit must be between 0 and 100. offset must be 0 or greater.")
         # make url and headers
@@ -360,10 +426,20 @@ class MdApi:
 			'content-type':'application/json'
 		}
 
+        orderParams = self.__parseOrder(order)
+
         parameters = {
-            'limit':limit,
-            'offset':offset,
-            'translatedLanguage[]': translatedLanguage
+            **{
+                'limit':limit,
+                'offset':offset,
+                'translatedLanguage[]': translatedLanguage,
+                'originalLanguage[]': originalLanguage,
+                'excludedOriginalLanguage[]': excludedOriginalLanguage,
+                'excludedGroups[]': excludedGroups,
+                'contentRating[]': contentRating,
+                'includes[]': includes,
+            }, 
+            **orderParams
         }
 
         print(f"calling {url}\n{parameters}")
